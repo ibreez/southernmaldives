@@ -1,19 +1,18 @@
-import dotenv from 'dotenv';
-import pg from 'pg';
+import dotenv from "dotenv";
+import pg from "pg";
 
 dotenv.config();
 
 const { Pool } = pg;
 
 export const pool = new Pool({
-  host: process.env.PGHOST || 'localhost',
-  user: process.env.PGUSER || 'postgres',
-  password: process.env.PGPASSWORD || '',
-  database: process.env.PGDATABASE || 'southernmaldives',
-  port: parseInt(process.env.PGPORT || '5432'),
+  connectionString: process.env.DATABASE_URL,   // ✅ IMPORTANT
+  ssl: {
+    rejectUnauthorized: false                  // ✅ REQUIRED for Railway
+  },
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000               // ✅ increase timeout
 });
 
 export async function query(sql, params = []) {
