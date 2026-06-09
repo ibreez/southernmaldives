@@ -43,9 +43,29 @@ async function ensureEnquirySchema() {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://travel.southernmaldives.com',
+  'https://southernmaldives.com'
+];
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: function (origin, callback) {
+    // allow server-to-server / mobile apps (no origin)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Blocked by CORS: ' + origin), false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 
