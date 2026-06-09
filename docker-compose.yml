@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # The Express Backend
+  hotel-backend:
+    image: hotel-backend:local
+    build:
+      context: .
+      dockerfile: backend/Dockerfile # Pointing to the Dockerfile inside your backend folder
+    container_name: hotel-backend
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PGHOST=host.docker.internal
+      - PGUSER=casaos
+      - PGPASSWORD=casaos
+      - PGDATABASE=casaos
+      - PGPORT=5432
+      - PORT=5000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # The React/Vite Frontend
+  hotel-frontend:
+    image: hotel-frontend:local
+    build:
+      context: .
+      dockerfile: Dockerfile # Assuming this is in your root
+    container_name: hotel-frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - hotel-backend
