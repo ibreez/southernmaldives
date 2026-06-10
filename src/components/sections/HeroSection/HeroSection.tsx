@@ -161,7 +161,7 @@ export default function LuxuryHeroSection() {
           transition={{ delay: 0.4, duration: 1 }}
           className="text-slate-300 font-light text-sm md:text-lg mb-10 md:mb-12 max-w-[280px] sm:max-w-xl mx-auto leading-relaxed italic opacity-90"
         >
-          "Personalized Maldives journeys with local island experiences, diving adventures, and handpicked resort escapes.          pnpm dev"
+          "Personalized Maldives journeys with local island experiences, diving adventures, and handpicked resort escapes."
         </motion.p>
 
         {/* Action Group */}
