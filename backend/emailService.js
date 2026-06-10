@@ -21,6 +21,8 @@ const transporter = nodemailer.createTransport({
   port: emailConfig.port,
   secure: emailConfig.secure,
   auth: emailConfig.auth.user && emailConfig.auth.pass ? emailConfig.auth : undefined,
+  debug: true,
+  logger: true,
 });
 
 export async function verifySmtpConnection() {
