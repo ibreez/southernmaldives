@@ -47,6 +47,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'https://travel.southernmaldives.com',
+  'southernmaldives-nkfg0i5vj-ibreezs-projects.vercel.app',
   'https://southernmaldives.com'
 ];
 
