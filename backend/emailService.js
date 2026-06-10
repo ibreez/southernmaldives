@@ -23,6 +23,9 @@ const transporter = nodemailer.createTransport({
   port: emailConfig.port,
   secure: emailConfig.secure,
   auth: emailConfig.auth.user && emailConfig.auth.pass ? emailConfig.auth : undefined,
+  tls: {
+    rejectUnauthorized: false
+  }
   debug: true,
   logger: true,
 });
