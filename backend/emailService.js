@@ -7,7 +7,7 @@ dotenv.config();
 const emailConfig = {
   host: process.env.VITE_SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.VITE_SMTP_PORT || '465'),
-  secure: process.env.VITE_SMTP_SECURE === 'false',
+  secure: process.env.VITE_SMTP_SECURE === 'true',
   auth: {
     user: process.env.VITE_SMTP_USERNAME,
     pass: process.env.VITE_SMTP_PASSWORD,
