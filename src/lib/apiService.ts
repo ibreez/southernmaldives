@@ -1,52 +1,10 @@
-import type { Hotel } from '@/types/hotel';
-import type { InstagramFeed } from '@/types/instagramFeed';
+import { Hotel } from '@/types/hotel';
+import { InstagramFeed } from '@/types/instagramFeed';
 import type { TravelPackage } from '@/types/package';
 
-/**
- * API BASE (Railway backend)
- * MUST be set in Vercel env:
- * VITE_API_URL=https://southernmaldives-production.up.railway.app
- */
-const API_BASE = import.meta.env.VITE_API_URL;
+// A lightweight API wrapper that replaces the frontend Supabase client.
+// It proxies requests to the Express API (server.js) which connects to MySQL.
 
-if (!API_BASE) {
-  throw new Error('VITE_API_URL is not defined');
-}
-
-/**
- * Generic API wrapper
- */
-async function api(path: string, opts: RequestInit = {}) {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(opts.headers as Record<string, string> || {}),
-  };
-
-  try {
-    const authToken = localStorage.getItem('auth_token');
-    if (authToken) {
-      headers.Authorization = `Bearer ${authToken}`;
-    }
-  } catch {
-    // ignore SSR / non-browser environments
-  }
-
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...opts,
-    headers,
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || res.statusText);
-  }
-
-  return res.json();
-}
-
-/* -----------------------------
-   TABLES (for reference only)
------------------------------- */
 export const TABLES = {
   HOTELS: 'app_1e21816bb9_hotels',
   HOTEL_ROOMS: 'app_1e21816bb9_hotel_rooms',
@@ -58,9 +16,7 @@ export const TABLES = {
   ENQUIRIES: 'app_1e21816bb9_enquiries',
 };
 
-/* -----------------------------
-   TYPES
------------------------------- */
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 export interface Promotion {
   id: string;
@@ -116,218 +72,161 @@ export interface Testimonial {
   created_at: string;
 }
 
-/* -----------------------------
-   SERVICES
------------------------------- */
+export interface InstagramFeed {
+  id: string;
+  image_url: string;
+  post_link: string;
+  caption?: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+async function api(path: string, opts: RequestInit = {}) {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(opts.headers as Record<string, string> || {}),
+  };
+
+  try {
+    const authToken = localStorage.getItem('auth_token');
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+  } catch {
+    // ignore localStorage errors in non-browser environments
+  }
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...opts,
+    headers,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || res.statusText);
+  }
+  return res.json();
+}
 
 export const promotionService = {
-  getAll(): Promise<Promotion[]> {
+  async getAll(): Promise<Promotion[]> {
     return api('/api/promotions');
   },
-
-  getActive(): Promise<Promotion[]> {
+  async getActive(): Promise<Promotion[]> {
     return api('/api/promotions/active');
   },
-
-  create(promotion: Omit<Promotion, 'id' | 'created_at'>): Promise<Promotion> {
-    return api('/api/promotions', {
-      method: 'POST',
-      body: JSON.stringify(promotion),
-    });
+  async create(promotion: Omit<Promotion, 'id' | 'created_at'>): Promise<Promotion> {
+    return api('/api/promotions', { method: 'POST', body: JSON.stringify(promotion) });
   },
-
-  update(id: string, promotion: Partial<Promotion>): Promise<Promotion> {
-    return api(`/api/promotions/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(promotion),
-    });
+  async update(id: string, promotion: Partial<Promotion>): Promise<Promotion> {
+    return api(`/api/promotions/${id}`, { method: 'PUT', body: JSON.stringify(promotion) });
   },
-
-  delete(id: string): Promise<void> {
-    return api(`/api/promotions/${id}`, {
-      method: 'DELETE',
-    });
+  async delete(id: string): Promise<void> {
+    return api(`/api/promotions/${id}`, { method: 'DELETE' });
   },
 };
 
 export const enquiryService = {
-  getAll(): Promise<Enquiry[]> {
+  async getAll(): Promise<Enquiry[]> {
     return api('/api/enquiries');
   },
-
-  create(enquiry: Omit<Enquiry, 'id' | 'created_at' | 'status'>): Promise<Enquiry> {
-    return api('/api/enquiries', {
-      method: 'POST',
-      body: JSON.stringify(enquiry),
-    });
+  async create(enquiry: Omit<Enquiry, 'id' | 'created_at' | 'status'>): Promise<Enquiry> {
+    return api('/api/enquiries', { method: 'POST', body: JSON.stringify(enquiry) });
   },
-
-  updateStatus(id: string, status: 'new' | 'replied') {
-    return api(`/api/enquiries/${id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
-    });
+  async updateStatus(id: string, status: 'new' | 'replied') {
+    return api(`/api/enquiries/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
   },
-
-  delete(id: string): Promise<void> {
-    return api(`/api/enquiries/${id}`, {
-      method: 'DELETE',
-    });
-  },
+  async delete(id: string): Promise<void> {
+    return api(`/api/enquiries/${id}`, { method: 'DELETE' });
+  }
 };
 
 export const emailTemplateService = {
-  getAll(): Promise<EmailTemplate[]> {
+  async getAll(): Promise<EmailTemplate[]> {
     return api('/api/email-templates');
   },
-
-  get(key: string): Promise<EmailTemplate> {
+  async get(key: string): Promise<EmailTemplate> {
     return api(`/api/email-templates/${key}`);
   },
-
-  update(key: string, template: Partial<EmailTemplate>): Promise<EmailTemplate> {
-    return api(`/api/email-templates/${key}`, {
-      method: 'PUT',
-      body: JSON.stringify(template),
-    });
+  async update(key: string, template: Partial<EmailTemplate>): Promise<EmailTemplate> {
+    return api(`/api/email-templates/${key}`, { method: 'PUT', body: JSON.stringify(template) });
   },
-
-  testSmtp(recipient?: string) {
-    return api('/api/email/smtp-test', {
-      method: 'POST',
-      body: JSON.stringify({ recipient }),
-    });
+  async testSmtp(recipient?: string) {
+    return api('/api/email/smtp-test', { method: 'POST', body: JSON.stringify({ recipient }) });
   },
 };
 
-/* -----------------------------
-   AUTH SERVICE
------------------------------- */
-
+// Minimal auth wrapper that calls server login endpoint. The frontend auth provider
+// will need small changes (it expects Supabase session objects). For now we return
+// a simple token object.
 export const authService = {
   async signIn(email: string, password: string) {
-    return api('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+    return api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
   },
-
   async signOut() {
-    localStorage.removeItem('auth_token');
+    // Client can just remove token locally
+    return;
   },
-
   async getSession() {
+    // Session handling should be implemented using JWT stored in localStorage/cookie
     return null;
   },
-
   onAuthStateChange(_callback: (session: unknown) => void) {
-    return {
-      unsubscribe() {},
-    };
-  },
+    return { unsubscribe() { /* noop */ } };
+  }
 };
-
-/* -----------------------------
-   TESTIMONIALS
------------------------------- */
 
 export const testimonialService = {
-  getAll(admin = false): Promise<Testimonial[]> {
+  async getAll(admin = false): Promise<Testimonial[]> {
     return api(`/api/testimonials${admin ? '?admin=true' : ''}`);
   },
-
-  create(testimonial: Omit<Testimonial, 'id' | 'created_at'>): Promise<Testimonial> {
-    return api('/api/testimonials', {
-      method: 'POST',
-      body: JSON.stringify(testimonial),
-    });
+  async create(testimonial: Omit<Testimonial, 'id' | 'created_at'>): Promise<Testimonial> {
+    return api('/api/testimonials', { method: 'POST', body: JSON.stringify(testimonial) });
   },
-
-  update(id: string, testimonial: Partial<Testimonial>): Promise<Testimonial> {
-    return api(`/api/testimonials/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(testimonial),
-    });
+  async update(id: string, testimonial: Partial<Testimonial>): Promise<Testimonial> {
+    return api(`/api/testimonials/${id}`, { method: 'PUT', body: JSON.stringify(testimonial) });
   },
-
-  delete(id: string): Promise<void> {
-    return api(`/api/testimonials/${id}`, {
-      method: 'DELETE',
-    });
+  async delete(id: string): Promise<void> {
+    return api(`/api/testimonials/${id}`, { method: 'DELETE' });
   },
 };
-
-/* -----------------------------
-   INSTAGRAM FEED
------------------------------- */
 
 export const instagramFeedService = {
-  getAll(): Promise<InstagramFeed[]> {
+  async getAll(): Promise<InstagramFeed[]> {
     return api('/api/instagram-feeds');
   },
-
-  getActive(): Promise<InstagramFeed[]> {
+  async getActive(): Promise<InstagramFeed[]> {
     return api('/api/instagram-feeds/active');
   },
-
-  create(feed: Omit<InstagramFeed, 'id' | 'created_at'>): Promise<InstagramFeed> {
-    return api('/api/instagram-feeds', {
-      method: 'POST',
-      body: JSON.stringify(feed),
-    });
+  async create(feed: Omit<InstagramFeed, 'id' | 'created_at'>): Promise<InstagramFeed> {
+    return api('/api/instagram-feeds', { method: 'POST', body: JSON.stringify(feed) });
   },
-
-  update(id: string, feed: Partial<InstagramFeed>): Promise<InstagramFeed> {
-    return api(`/api/instagram-feeds/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(feed),
-    });
+  async update(id: string, feed: Partial<InstagramFeed>): Promise<InstagramFeed> {
+    return api(`/api/instagram-feeds/${id}`, { method: 'PUT', body: JSON.stringify(feed) });
   },
-
-  delete(id: string): Promise<void> {
-    return api(`/api/instagram-feeds/${id}`, {
-      method: 'DELETE',
-    });
+  async delete(id: string): Promise<void> {
+    return api(`/api/instagram-feeds/${id}`, { method: 'DELETE' });
   },
-
-  reorder(updates: { id: string; display_order: number }[]): Promise<void> {
-    return api('/api/instagram-feeds/reorder', {
-      method: 'POST',
-      body: JSON.stringify(updates),
-    });
-  },
+  async reorder(updates: { id: string; display_order: number }[]): Promise<void> {
+    return api('/api/instagram-feeds/reorder', { method: 'POST', body: JSON.stringify(updates) });
+  }
 };
 
-/* -----------------------------
-   PACKAGES
------------------------------- */
-
 export const packageService = {
-  getAll(): Promise<TravelPackage[]> {
+  async getAll(): Promise<TravelPackage[]> {
     return api('/api/packages');
   },
-
-  getById(id: string): Promise<TravelPackage> {
+  async getById(id: string): Promise<TravelPackage> {
     return api(`/api/packages/${id}`);
   },
-
-  create(pkg: Omit<TravelPackage, 'id' | 'created_at'>): Promise<TravelPackage> {
-    return api('/api/packages', {
-      method: 'POST',
-      body: JSON.stringify(pkg),
-    });
+  async create(pkg: Omit<TravelPackage, 'id' | 'created_at'>): Promise<TravelPackage> {
+    return api('/api/packages', { method: 'POST', body: JSON.stringify(pkg) });
   },
-
-  update(id: string, pkg: Partial<TravelPackage>): Promise<TravelPackage> {
-    return api(`/api/packages/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(pkg),
-    });
+  async update(id: string, pkg: Partial<TravelPackage>): Promise<TravelPackage> {
+    return api(`/api/packages/${id}`, { method: 'PUT', body: JSON.stringify(pkg) });
   },
-
-  delete(id: string): Promise<void> {
-    return api(`/api/packages/${id}`, {
-      method: 'DELETE',
-    });
+  async delete(id: string): Promise<void> {
+    return api(`/api/packages/${id}`, { method: 'DELETE' });
   },
 };
