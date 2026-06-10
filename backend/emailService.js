@@ -25,7 +25,7 @@ const transporter = nodemailer.createTransport({
   auth: emailConfig.auth.user && emailConfig.auth.pass ? emailConfig.auth : undefined,
   tls: {
     rejectUnauthorized: false
-  }
+  },
   debug: true,
   logger: true,
 });
