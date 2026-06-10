@@ -16,7 +16,7 @@ export const TABLES = {
   ENQUIRIES: 'app_1e21816bb9_enquiries',
 };
 
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 export interface Promotion {
   id: string;
