@@ -43,30 +43,40 @@ async function ensureEnquirySchema() {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'https://travel.southernmaldives.com',
-  'southernmaldives-nkfg0i5vj-ibreezs-projects.vercel.app',
   'https://southernmaldives.com'
 ];
 
-// Middleware
 app.use(cors({
   origin: function (origin, callback) {
-    // allow server-to-server / mobile apps (no origin)
+    // 1. Allow server-to-server / Postman / mobile apps (no origin)
     if (!origin) return callback(null, true);
 
+    // 2. Check strict matches (Production domains and localhost)
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
+    // 3. Dynamic match for ANY Vercel preview branch deployment from your project
+    // This matches: https://southernmaldives-anyhash-ibreezs-projects.vercel.app
+    const vercelPreviewRegex = /^https:\/\/southernmaldives-[a-zA-Z0-9_-]+-ibreezs-projects\.vercel\.app$/;
+    
+    if (vercelPreviewRegex.test(origin)) {
+      return callback(null, true);
+    }
+
+    // If it fails everything above:
     return callback(new Error('Blocked by CORS: ' + origin), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
 
 
