@@ -6,12 +6,14 @@ dotenv.config();
 
 const emailConfig = {
   host: process.env.VITE_SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.VITE_SMTP_PORT || '587'),
-  secure: process.env.VITE_SMTP_SECURE === 'true',
+  port: parseInt(process.env.VITE_SMTP_PORT || '465'),
+  secure: process.env.VITE_SMTP_SECURE === 'false',
   auth: {
     user: process.env.VITE_SMTP_USERNAME,
     pass: process.env.VITE_SMTP_PASSWORD,
   },
+  logger: true,
+  debug: true,
   from: process.env.VITE_SMTP_FROM || 'noreply@southernmaldives.com',
   to: process.env.VITE_ADMIN_EMAIL || 'admin@southernmaldives.com',
 };
