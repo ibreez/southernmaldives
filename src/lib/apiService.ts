@@ -17,6 +17,9 @@ export const TABLES = {
 };
 
 const API_BASE = import.meta.env.VITE_API_BASE;
+if (!API_BASE) {
+  console.error("CRITICAL CONFIG ERROR: VITE_API_BASE environment variable is missing!");
+}
 
 export interface Promotion {
   id: string;
