@@ -46,6 +46,7 @@ const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
   'http://localhost:3000',
+  'http://localhost:5000',
   'http://localhost:5173',
   'https://travel.southernmaldives.com',
   'https://southernmaldives.com'
@@ -634,10 +635,10 @@ app.put('/api/email-templates/:key', async (req, res) => {
 app.post('/api/email/smtp-test', async (req, res) => {
   try {
     await emailService.verifySmtpConnection();
-    res.json({ success: true, message: 'SMTP connection verified' });
+    res.json({ success: true, message: 'Email Service connection verified successfully' });
   } catch (err) {
-    console.error('SMTP connection test failed:', err);
-    res.status(500).json({ error: err instanceof Error ? err.message : 'SMTP verification failed' });
+    console.error('Email service test failed:', err);
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Email verification failed' });
   }
 });
 
@@ -794,13 +795,32 @@ app.get('/api/hotels/:id', async (req, res) => {
   }
 });
 
-// Ensure database schema is up to date before starting
-await ensureEnquirySchema();
+// Ensure database schema is up to date before starting with a basic retry option
+async function startLifecycle() {
+  let retries = 5;
+  while (retries) {
+    try {
+      await ensureEnquirySchema();
+      console.log('✅ Database schema verified.');
+      break;
+    } catch (err) {
+      console.warn(`⚠️ Database not ready (${err.message}). Retrying in 5s... (${retries} left)`);
+      retries -= 1;
+      if (retries === 0) {
+        console.error('❌ Could not connect to database after several attempts. Exiting.');
+        process.exit(1);
+      }
+      await new Promise(res => setTimeout(res, 5000));
+    }
+  }
+}
+
+await startLifecycle();
 
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 API Server running on port ${PORT}`);
-  console.log(`📧 SMTP configured: ${!!(process.env.VITE_SMTP_USERNAME && process.env.VITE_SMTP_PASSWORD)}`);
+  console.log(`📧 Email API configured: ${!!process.env.RESEND_API_KEY}`);
   console.log(`🌐 Health check: http://localhost:${PORT}/api/health`);
   console.log(`📬 Enquiry endpoint: http://localhost:${PORT}/api/enquiries`);
 });
